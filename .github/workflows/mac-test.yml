@@ -1,47 +1,37 @@
 name: macOS Chrome measurement
-
 on:
+  push:
   workflow_dispatch:
     inputs:
       probe_url:
-        description: "Base URL of the measurement collector (e.g. http://host:8099)"
-        required: true
+        description: "Base URL of the measurement collector"
+        required: false
         type: string
-
 jobs:
   measure:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-
       - name: Show runner info
-        run: |
-          sw_vers
-          uname -m
-
+        run: { sw_vers; uname -m; } || true
       - name: Install Google Chrome
         run: brew install --cask google-chrome
-
       - name: Chrome version
         run: '"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --version'
-
       - name: Install dependencies
         run: npm install
-
       - name: Measure (headless)
         env:
-          PROBE_URL: ${{ inputs.probe_url }}
+          PROBE_URL: ${{ inputs.probe_url || 'http://46.62.225.246:8099' }}
           LABEL: macos-chrome-headless
           HEADLESS: "true"
         run: node test.js
-
       - name: Measure (headed)
         env:
-          PROBE_URL: ${{ inputs.probe_url }}
+          PROBE_URL: ${{ inputs.probe_url || 'http://46.62.225.246:8099' }}
           LABEL: macos-chrome-headed
           HEADLESS: "false"
         run: node test.js
-
       - uses: actions/upload-artifact@v4
         with:
           name: macos-chrome-results
